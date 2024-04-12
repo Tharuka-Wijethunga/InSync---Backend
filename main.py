@@ -13,7 +13,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-
+# 2nd comment for Lihaj
 # route to dashboard
 app.include_router(DashboardRouter, tags=["Dashboard"], prefix="/api/dashboard")
 
