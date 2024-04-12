@@ -14,6 +14,7 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+# route to dashboard
 app.include_router(DashboardRouter, tags=["Dashboard"], prefix="/api/dashboard")
 
 @app.get("/")
