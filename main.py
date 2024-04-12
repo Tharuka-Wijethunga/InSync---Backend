@@ -16,6 +16,7 @@ app.add_middleware(
 
 app.include_router(DashboardRouter, tags=["Dashboard"], prefix="/api/dashboard")
 
+#lihajcomment
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
