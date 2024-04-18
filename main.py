@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.dashboard import router as DashboardRouter
+from app.routers.addRecord import router as AddRecordRouter
 
 app = FastAPI()
 
@@ -13,11 +14,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-# 2nd comment for Lihaj
-# route to dashboard
+
+# routers
 app.include_router(DashboardRouter, tags=["Dashboard"], prefix="/api/dashboard")
+app.include_router(AddRecordRouter, tags=["Add Record"], prefix="/api/addrecord")
 
 #lihajcomment
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Welcome to InSync"}

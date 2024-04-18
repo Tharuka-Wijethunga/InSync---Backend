@@ -1,4 +1,6 @@
 import motor.motor_asyncio
+from app.models.record import Record
+from app.models.account import Account
 
 client = motor.motor_asyncio.AsyncIOMotorClient('mongodb+srv://tharuka0621:kE3DcROsCHMH8cqH@insync.7taaiij.mongodb.net/')
 database = client.InSync
@@ -15,3 +17,7 @@ async def create_account(account):
     result = await accountCollection.insert_one(document)
     return document
 
+async def create_record(record):
+    document = record
+    result = await recordsCollection.insert_one(document)
+    return document
