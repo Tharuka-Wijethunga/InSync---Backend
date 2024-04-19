@@ -1,6 +1,5 @@
 import motor.motor_asyncio
-from app.models.record import Record
-from app.models.account import Account
+from ..models.record import Record,ObjectId
 
 client = motor.motor_asyncio.AsyncIOMotorClient('mongodb+srv://tharuka0621:kE3DcROsCHMH8cqH@insync.7taaiij.mongodb.net/')
 database = client.InSync
@@ -21,3 +20,18 @@ async def create_record(record):
     document = record
     result = await recordsCollection.insert_one(document)
     return document
+
+async def fetch_record(id):
+    document = await recordsCollection.find_one({"_id": ObjectId(id)})
+    return document
+
+async def fetch_all_records():
+    records = []
+    cursor = recordsCollection.find({})
+    async for document in cursor:
+        # Handle missing 'date' and 'time' fields
+        document.setdefault('date', None)
+        document.setdefault('time', None)
+
+        records.append((Record(**document)))
+    return records
