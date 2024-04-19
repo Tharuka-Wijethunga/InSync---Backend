@@ -23,6 +23,9 @@ async def create_record(record):
 
 async def fetch_record(id):
     document = await recordsCollection.find_one({"_id": ObjectId(id)})
+    document.setdefault('date', None)
+    document.setdefault('time', None)
+
     return document
 
 async def fetch_all_records():
