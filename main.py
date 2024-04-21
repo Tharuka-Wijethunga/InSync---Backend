@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.dashboard import router as DashboardRouter
 from app.routers.onboarding import router as onboarding_router
+from app.routers.userAuthentication.auth import authRouter as auth_router
 
 app = FastAPI()
 
@@ -17,6 +18,7 @@ app.add_middleware(
 
 app.include_router(DashboardRouter, tags=["Dashboard"], prefix="/api/dashboard")
 app.include_router(onboarding_router, prefix="/onBoarding")
+app.include_router(auth_router)
 
 @app.get("/")
 async def root():
