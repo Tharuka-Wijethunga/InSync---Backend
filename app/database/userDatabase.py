@@ -10,17 +10,17 @@ UserCollection = database.Users
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-async def get_user(username: str):
-    return await UserCollection.find_one({"username": username})
+async def get_user(email: str):
+    return await UserCollection.find_one({"email": email})
 
-async def create_user(username: str, email: str, gender: str, password: str):
+async def create_user(fullname: str, email: str, gender: str, password: str):
     hashed_password = pwd_context.hash(password)
-    user = {"username": username, "email": email, "gender": gender, "hashed_password": hashed_password}
+    user = {"fullname": fullname, "email": email, "gender": gender, "hashed_password": hashed_password}
     result = await UserCollection.insert_one(user)
     return User(**user, id=str(result.inserted_id))
 
-async def authenticate_user(username: str, password: str):
-    user = await get_user(username)
+async def authenticate_user(email: str, password: str):
+    user = await get_user(email)
     if not user:
         return False
     if not pwd_context.verify(password, user["hashed_password"]):
