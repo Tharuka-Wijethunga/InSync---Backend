@@ -1,8 +1,9 @@
 from datetime import datetime
-from pydantic import BaseModel,Field
+from pydantic import BaseModel, Field
 from pydantic_core import core_schema
 from bson import ObjectId
 from typing import Any
+
 
 class RecordId(ObjectId):
     @classmethod
@@ -30,6 +31,7 @@ class RecordId(ObjectId):
                 lambda x: str(x)
             ),
         )
+
 
 class Record(BaseModel):
     class Config:

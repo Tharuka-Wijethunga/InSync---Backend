@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers.dashboard import router as DashboardRouter
-from app.routers.addRecord import router as AddRecordRouter
+from app.routers.dashboard import router as dashboard_router
+from app.routers.addRecord import router as add_record_router
 
 app = FastAPI()
 
@@ -16,8 +16,9 @@ app.add_middleware(
 )
 
 # routers
-app.include_router(DashboardRouter, tags=["Dashboard"], prefix="/api/dashboard")
-app.include_router(AddRecordRouter, tags=["Add Record"], prefix="/api/addrecord")
+app.include_router(dashboard_router, tags=["Dashboard"], prefix="/api/dashboard")
+app.include_router(add_record_router, tags=["Add Record"], prefix="/api/addrecord")
+
 
 #lihajcomment
 @app.get("/")
