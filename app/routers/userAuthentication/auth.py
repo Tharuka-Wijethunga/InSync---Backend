@@ -41,7 +41,13 @@ async def signup(signup_request: SignupRequest):
         signup_request.fullname,
         signup_request.email,
         signup_request.gender,
-        signup_request.password
+        signup_request.password,
+        signup_request.incomeRange,
+        signup_request.car,
+        signup_request.bike,
+        signup_request.threeWheeler,
+        signup_request.none,
+        signup_request.loanAmount
     )
 
 @authRouter.get("/me")

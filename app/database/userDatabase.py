@@ -13,9 +13,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 async def get_user(email: str):
     return await UserCollection.find_one({"email": email})
 
-async def create_user(fullname: str, email: str, gender: str, password: str):
+async def create_user(fullname: str, email: str, gender: str, password: str,incomeRange: float,car: bool, bike:bool, threeWheeler: bool, none: bool, loanAmount: float):
     hashed_password = pwd_context.hash(password)
-    user = {"fullname": fullname, "email": email, "gender": gender, "hashed_password": hashed_password}
+    user = {"fullname": fullname, "email": email, "gender": gender, "hashed_password": hashed_password, "incomeRange":incomeRange, "car": car, "bike": bike, "threeWheeler": threeWheeler, "none": none, "loanAmount":loanAmount}
     result = await UserCollection.insert_one(user)
     return User(**user, id=str(result.inserted_id))
 
