@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers.dashboard import router as DashboardRouter
 from app.routers.onboarding import router as onboarding_router
 from app.routers.userAuthentication.auth import authRouter as auth_router
+from app.routers.addRecord import router as add_record_router
 
 app = FastAPI()
 
@@ -16,10 +17,12 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+
 app.include_router(DashboardRouter, tags=["Dashboard"], prefix="/api/dashboard")
 app.include_router(onboarding_router, prefix="/onBoarding")
 app.include_router(auth_router)
+app.include_router(add_record_router, tags=["Add Record"], prefix="/api/addrecord")
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Welcome to InSync"}
