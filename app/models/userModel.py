@@ -5,6 +5,12 @@ class User(BaseModel):
     email: str
     gender: str
     hashed_password: str
+    incomeRange: float
+    car: bool
+    bike: bool
+    threeWheeler: bool
+    none: bool
+    loanAmount: float
 
 class TokenRequest(BaseModel):
     email: str
@@ -15,3 +21,9 @@ class SignupRequest(BaseModel):
     email: str
     gender: str
     password: str
+    incomeRange: float
+    car: bool
+    bike: bool
+    threeWheeler: bool
+    none: bool
+    loanAmount: float

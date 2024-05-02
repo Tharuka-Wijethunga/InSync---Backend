@@ -1,6 +1,6 @@
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException,status
-from app.database.userDatabase import get_user
+from app.database.database import get_user
 from app.models.userModel import User
 from datetime import datetime, timedelta
 from typing import Optional
@@ -23,14 +23,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=1)  # Shorter expiration time for access tokens
+        expire = datetime.utcnow() + timedelta(minutes=10)  # Shorter expiration time for access tokens
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 def create_refresh_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=5)  # Longer expiration time for refresh tokens
+    expire = datetime.utcnow() + timedelta(days=10)  # Longer expiration time for refresh tokens
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
