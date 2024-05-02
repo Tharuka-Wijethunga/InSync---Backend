@@ -20,6 +20,7 @@ app.include_router(dashboard_router, tags=["Dashboard"], prefix="/api/dashboard"
 app.include_router(add_record_router, tags=["Add Record"], prefix="/api/addrecord")
 
 
+#lihajcomment
 @app.get("/")
 async def root():
     return {"message": "Welcome to InSync"}
