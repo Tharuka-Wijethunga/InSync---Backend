@@ -18,7 +18,7 @@ app.add_middleware(
 
 
 app.include_router(DashboardRouter, tags=["Dashboard"], prefix="/api/dashboard")
-app.include_router(auth_router)
+app.include_router(auth_router, tags=["Auth"])
 app.include_router(add_record_router, tags=["Add Record"], prefix="/api/addrecord")
 
 @app.get("/")

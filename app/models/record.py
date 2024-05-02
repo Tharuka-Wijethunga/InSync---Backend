@@ -2,7 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from pydantic_core import core_schema
 from bson import ObjectId
-from typing import Any
+from typing import Any,Optional
 
 
 class RecordId(ObjectId):
@@ -41,6 +41,7 @@ class Record(BaseModel):
         }
 
     id: RecordId = Field(default_factory=RecordId, alias='_id')
+    userID: Optional[str] = None  # Handling missing value for the userID. When the application is fully done, => REMOVE the optional part
     type: str
     amount: float
     account: str
