@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from app.models.account import Account
 from app.models.updateBalance import UpdateBalance
 from ..database.aggregations import today_spending
+from datetime import datetime, timedelta
 
 from app.database.database import (
     fetch_balance,
@@ -11,6 +12,7 @@ from app.database.database import (
 )
 
 router = APIRouter()
+
 
 @router.get("/account", response_model=float)
 async def get_balance(type):
@@ -30,9 +32,18 @@ async def post_account(account: Account):
 
 @router.get("/today_spending", response_model=float)
 async def get_today_spending():
-    response = await run_aggregation(today_spending)
+    now = datetime.now()
+    start = now.date()
+    end = start + timedelta(days=1)
+
+    # Convert date to string because we store date and time separately and therefore we have to match the date field correctly
+    start = start.strftime("%Y-%m-%d")
+    end = end.strftime("%Y-%m-%d")
+
+    pipeline = today_spending(start, end)
+    response = await run_aggregation(pipeline)
     if response:
-        return response[0]['spends']
+        return response[0]['spends'] if response else 0
     raise HTTPException(404, "No expense records found for today")
 
 
