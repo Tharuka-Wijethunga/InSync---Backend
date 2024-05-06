@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.models.account import Account
-from app.models.updateBalance import UpdateBalance
+from app.models.account import UpdateBalance
+from app.models.account import UpdateBalanceManually
 from ..database.aggregations import today_spending
 from datetime import datetime, timedelta
 
@@ -64,4 +65,17 @@ async def put_account(account: str, update: UpdateBalance):
     # Save the updated balance back to the database
     await update_balance(account, balance)
 
+    return {"type": account, "balance": balance}
+
+
+@router.put("/account/{account}/manual",response_model=Account)
+async def put_account_manual(account: str, update: UpdateBalanceManually):
+    balance = await fetch_balance(account)
+
+    if balance is None:
+        raise HTTPException(404, f"There is no account type {account}")
+
+    balance = update.balance
+
+    await update_balance(account, balance)
     return {"type": account, "balance": balance}
