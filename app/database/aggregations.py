@@ -20,3 +20,59 @@ def today_spending(start, end):
         }
     ]
     return pipeline
+
+def sumOfAllExpenses(userID,currentMonth):
+    pipeline = [
+        {
+            '$match': {
+                'userID': userID,
+                'category': {
+                    '$ne': 'Income'
+                },
+                '$expr': {
+                    '$regexMatch':{
+                        'input': '$date',
+                        'regex': currentMonth,
+                        'options': 'i'
+                    }
+                }
+            }
+        },
+        {
+            '$group': {
+                '_id': None,
+                'totalAmount': {
+                    '$sum': '$amount'
+                }
+            }
+        }
+    ]
+    return pipeline
+
+def getGroupCategorySum(userID,currentMonth):
+    pipeline =[
+        {
+            '$match': {
+                'userID': userID,
+                'category': {
+                    '$ne': 'Income'
+                },
+                '$expr': {
+                    '$regexMatch': {
+                        'input': '$date',
+                        'regex': currentMonth,
+                        'options': 'i'
+                    }
+                }
+            }
+        }, {
+            '$group': {
+                '_id': '$category',
+                'average': {
+                    '$sum': '$amount'
+                }
+            }
+        }
+    ]
+    return pipeline
+
