@@ -68,7 +68,7 @@ def getGroupCategorySum(userID,currentMonth):
         }, {
             '$group': {
                 '_id': '$category',
-                'average': {
+                'sum': {
                     '$sum': '$amount'
                 }
             }
