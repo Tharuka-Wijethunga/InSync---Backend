@@ -46,5 +46,8 @@ class Record(BaseModel):
     amount: float
     account: str
     category: str
+    icon_name: str
+    icon_color: str
+    icon_size: int
     date: datetime.date
     time: datetime.time
