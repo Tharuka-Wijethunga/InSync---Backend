@@ -4,7 +4,7 @@ from starlette import status
 
 from app.models.userModel import SignupRequest, User
 from app.routers.userAuthentication.security import create_access_token, get_current_user, create_refresh_token
-from app.database.database import create_user, authenticate_user
+from app.database.database import create_user, authenticate_user, get_user
 
 authRouter = APIRouter()
 
@@ -49,6 +49,13 @@ async def signup(signup_request: SignupRequest):
         signup_request.none,
         signup_request.loanAmount
     )
+@authRouter.post("/checkMail")
+async def checkMail(email: str):
+    user = await get_user(email)
+    if user:
+        return {"exists": True}
+    else:
+        return {"exists": False}
 
 @authRouter.get("/me")
 async def read_users_me(current_user: User = Depends(get_current_user)):
