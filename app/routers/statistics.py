@@ -1,11 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from app.database.aggregations import sumOfAllExpenses,getGroupCategorySum
 from app.database.database import run_aggregation
 from datetime import datetime, timedelta
 
+from app.routers.userAuthentication.security import get_current_userID
+
 router = APIRouter()
 @router.get("/thisMonthTotal")
-async def getThisMonthTotal(userID: str):
+async def getThisMonthTotal(userID: str=Depends(get_current_userID)):
     currentMonth = datetime.now().strftime("-%m-")
     pipeline = sumOfAllExpenses(userID,currentMonth)
     response = await run_aggregation(pipeline)
@@ -14,7 +16,7 @@ async def getThisMonthTotal(userID: str):
     raise HTTPException(404, "this month total does not exist")
 
 @router.get("/thisMonthStat")
-async def getThisMonthStat(userID: str):
+async def getThisMonthStat(userID: str=Depends(get_current_userID)):
     currentMonth = datetime.now().strftime("-%m-")
 
 #get the totalAmount
@@ -37,7 +39,7 @@ async def getThisMonthStat(userID: str):
 
 
 @router.get("/previousMonthTotal")
-async def getPreviousMonthTotal(userID: str):
+async def getPreviousMonthTotal(userID: str=Depends(get_current_userID)):
 # Get the previous month
     previousMonth = datetime.now().replace(day=1) - timedelta(days=1)
     previousMonth = previousMonth.strftime("-%m-")
@@ -48,7 +50,7 @@ async def getPreviousMonthTotal(userID: str):
     raise HTTPException(404, "this month total does not exist")
 
 @router.get("/previousMonthStat")
-async def getPreviousMonthStat(userID: str):
+async def getPreviousMonthStat(userID: str=Depends(get_current_userID)):
 # Get the previous month
     previousMonth = datetime.now().replace(day=1) - timedelta(days=1)
     previousMonth = previousMonth.strftime("-%m-")
