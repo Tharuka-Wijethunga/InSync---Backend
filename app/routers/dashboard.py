@@ -1,10 +1,13 @@
+from typing import List
+
 from fastapi import APIRouter, HTTPException
 from app.models.account import Account
 from app.models.account import UpdateBalance
 from app.models.account import UpdateBalanceManually
 from ..database.aggregations import today_spending
 from datetime import datetime, timedelta
-
+from ..models.inputData import PredictionResponse, InputData
+from ..services.model import make_prediction, train_model
 from app.database.database import (
     fetch_balance,
     create_account,
@@ -37,7 +40,7 @@ async def get_today_spending():
     start = now.date()
     end = start + timedelta(days=1)
 
-    # Convert date to string because we store date and time separately and therefore we have to match the date field correctly
+    # Convert date to string because we store date and time separately, and therefore we have to match the date field correctly
     start = start.strftime("%Y-%m-%d")
     end = end.strftime("%Y-%m-%d")
 
@@ -79,3 +82,23 @@ async def put_account_manual(account: str, update: UpdateBalanceManually):
 
     await update_balance(account, balance)
     return {"type": account, "balance": balance}
+
+
+@router.get("/predict", response_model=PredictionResponse)
+async def predict_expense(data: List[InputData]):
+    try:
+        input_data = [item.dict() for item in data]
+        predictions = make_prediction(input_data)
+        return [{"Monthly_Total_Expense": pred} for pred in predictions]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/train")
+async def train_model_endpoint():
+    try:
+        global model, scaler
+        model, scaler = await train_model()
+        return {"message": "Model retrained successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
