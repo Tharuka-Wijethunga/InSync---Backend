@@ -1,15 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.database.aggregations import sumOfAllExpenses, getGroupCategorySum, DailyRecordsGroupByCategory
-from app.database.database import run_aggregation
+from app.database.database import run_aggregation, get_model_info, create_model_info, update_model_info
 from datetime import datetime, timedelta
+from app.models.ModelInfo import ModelInfo
 from app.routers.userAuthentication.security import get_current_userID
 
 import pandas as pd
-from typing import Dict
 from prophet import Prophet
+from joblib import dump, load
 
-# Initialize an empty dictionary to store models for each user
-model_cache: Dict[str, Dict] = {}
 
 router = APIRouter()
 @router.get("/thisMonthTotal")
@@ -100,21 +99,30 @@ async def trainModel(userID: str) -> Prophet:
         model = Prophet()
         model.fit(df)
 
-        # Update the cache
-        model_cache[userID] = {'model': model, 'last_trained': datetime.now()}
+        # Saving the model file in directory
+        model_path = f"app/saveFiles/{userID}_model.pkl"
+        dump(model, model_path)
+
+        # Create or update the model info in the database
+        model_info = ModelInfo(userID=userID, model_path=model_path, last_trained_day=datetime.now())
+        existing_model_info = await get_model_info(userID)
+        if existing_model_info is None:
+            await create_model_info(model_info)
+        else:
+            await update_model_info(userID, model_info)
 
         return model
 
 @router.get("/ForecastNextDay")
 async def forecast_next_day(userID: str=Depends(get_current_userID)):
     current_date = datetime.now()
-    # Check if the model needs to be retrained (e.g., at the start of a new month)
-    if userID not in model_cache or model_cache[userID]['last_trained'].month != current_date.month:
+    model_info = await get_model_info(userID)
+    if model_info is None or model_info['last_trained_day'].month != current_date.month:
         print("Retraining model...")
         model = await trainModel(userID)
     else:
-        print("Using cached model...")
-        model = model_cache[userID]['model']
+        print("Using saved model...")
+        model = load(model_info['model_path'])
 
     if model:
         # Make future dataframe

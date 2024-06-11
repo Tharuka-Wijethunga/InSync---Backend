@@ -2,6 +2,7 @@ import motor.motor_asyncio
 from ..models.record import Record, ObjectId
 from passlib.context import CryptContext
 from app.models.userModel import User
+from app.models.ModelInfo import ModelInfo
 
 client = motor.motor_asyncio.AsyncIOMotorClient(
     'mongodb+srv://tharuka0621:kE3DcROsCHMH8cqH@insync.7taaiij.mongodb.net/')
@@ -9,6 +10,7 @@ database = client.InSync
 recordsCollection = database.Records
 accountCollection = database.Accounts
 userCollection = database.Users
+saveFilesCollection = database.SaveFiles
 
 
 async def fetch_balance(type):
@@ -89,3 +91,18 @@ async def authenticate_user(email: str, password: str):
     if not pwd_context.verify(password, user["hashed_password"]):
         return False
     return User(**user)
+
+#Time Series Model---------------------------------------------------------------------------------
+async def create_model_info(model_info: ModelInfo):
+    document = model_info.dict()
+    result = await saveFilesCollection.insert_one(document)
+    return document
+
+async def get_model_info(userID: str):
+    return await saveFilesCollection.find_one({"userID": userID})
+
+async def update_model_info(userID: str, model_info: ModelInfo):
+    await saveFilesCollection.update_one(
+        {'userID': userID},
+        {'$set': model_info.dict()}
+    )
