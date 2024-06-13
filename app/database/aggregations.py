@@ -1,7 +1,8 @@
-def today_spending(start, end):
+def today_spending(start, end, userID):
     pipeline = [
         {
             '$match': {
+                'userID': userID,
                 'date': {'$gte': start, '$lt': end},
                 'type': 'expense'
             }
@@ -71,6 +72,22 @@ def getGroupCategorySum(userID,currentMonth):
                 'sum': {
                     '$sum': '$amount'
                 }
+            }
+        }
+    ]
+    return pipeline
+
+
+def getRecordsByUserID(userID):
+    pipeline =[
+        {
+            '$match': {
+                'userID': userID
+            }
+        },
+        {
+            '$project': {
+                '_id': 0
             }
         }
     ]

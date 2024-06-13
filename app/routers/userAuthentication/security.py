@@ -1,7 +1,7 @@
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException,status
 from app.database.database import get_user
-from app.models.userModel import User
+from app.pydantic_models.userModel import User
 from datetime import datetime, timedelta
 from typing import Optional
 
