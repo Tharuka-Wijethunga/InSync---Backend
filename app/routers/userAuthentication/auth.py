@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 
-from app.models.userModel import SignupRequest, User
+from app.pydantic_models.userModel import SignupRequest, User
 from app.routers.userAuthentication.security import create_access_token, get_current_user, create_refresh_token
 from app.database.database import create_user, authenticate_user, get_user
 
