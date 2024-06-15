@@ -12,8 +12,11 @@ router = APIRouter()
 
 
 @router.post("", response_model=Record)
-async def post_record(record: Record):
-    response = await create_record(record.dict())
+async def post_record(record: Record, userID: str = Depends(get_current_userID)):
+    # Add userID to the record dictionary
+    record_dict = record.dict()
+    record_dict['userID'] = userID
+    response = await create_record(record_dict)
     if response:
         return response
     raise HTTPException(400, "Something went wrong")

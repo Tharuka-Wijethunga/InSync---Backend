@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.database.aggregations import sumOfAllExpenses, getGroupCategorySum, DailyRecordsGroupByCategory
 from app.database.database import run_aggregation, get_model_info, create_model_info, update_model_info
 from datetime import datetime, timedelta
-from app.models.ModelInfo import ModelInfo
+from app.pydantic_models.ModelInfo import ModelInfo
 from app.routers.userAuthentication.security import get_current_userID
 
 import pandas as pd
@@ -126,7 +126,7 @@ async def forecast_next_day(userID: str=Depends(get_current_userID)):
 
     if model:
         # Make future dataframe
-        future = model.make_future_dataframe(periods=1)  # Predict next day
+        future = model.make_future_dataframe(periods=10)  # Predict next day
 
         # Forecast
         forecast = model.predict(future)

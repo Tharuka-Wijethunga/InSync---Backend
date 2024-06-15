@@ -4,6 +4,7 @@ import pandas as pd
 from ..pydantic_models.record import Record, ObjectId
 from passlib.context import CryptContext
 from app.pydantic_models.userModel import User
+from app.pydantic_models.ModelInfo import ModelInfo
 
 client = motor.motor_asyncio.AsyncIOMotorClient(
     'mongodb+srv://tharuka0621:kE3DcROsCHMH8cqH@insync.7taaiij.mongodb.net/')
