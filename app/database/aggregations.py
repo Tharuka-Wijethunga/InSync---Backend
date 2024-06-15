@@ -93,3 +93,30 @@ def getRecordsByUserID(userID):
     ]
     return pipeline
 
+
+def DailyRecordsGroupByCategory(userID):
+    pipeline = [
+        {
+            '$match': {
+                'userID': userID
+            }
+        }, {
+            '$group': {
+                '_id': {
+                    'date': '$date',
+                    'category': '$category'
+                },
+                'totalAmount': {
+                    '$sum': '$amount'
+                }
+            }
+        }, {
+            '$project': {
+                '_id': 0,
+                'Date': '$_id.date',
+                'Category': '$_id.category',
+                'Amount': '$totalAmount'
+            }
+        }
+    ]
+    return pipeline
