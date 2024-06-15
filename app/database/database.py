@@ -1,8 +1,9 @@
 import motor.motor_asyncio
-from ..models.record import Record, ObjectId
+import pandas as pd
+
+from ..pydantic_models.record import Record, ObjectId
 from passlib.context import CryptContext
-from app.models.userModel import User
-from app.models.ModelInfo import ModelInfo
+from app.pydantic_models.userModel import User
 
 client = motor.motor_asyncio.AsyncIOMotorClient(
     'mongodb+srv://tharuka0621:kE3DcROsCHMH8cqH@insync.7taaiij.mongodb.net/')
@@ -40,16 +41,16 @@ async def fetch_record(id):
     return document
 
 
-async def fetch_all_records():
-    records = []
-    cursor = recordsCollection.find({})
-    async for document in cursor:
-        # Handle missing 'date' and 'time' fields
-        document.setdefault('date', None)
-        document.setdefault('time', None)
-
-        records.append((Record(**document)))
-    return records
+# async def fetch_all_records():
+#     records = []
+#     cursor = recordsCollection.find({})
+#     async for document in cursor:
+#         # Handle missing 'date' and 'time' fields
+#         document.setdefault('date', None)
+#         document.setdefault('time', None)
+#
+#         records.append((Record(**document)))
+#     return records
 
 
 async def run_aggregation(pipeline: list[dict]):
@@ -81,6 +82,23 @@ async def create_user(fullname: str, email: str, gender: str, password: str, inc
             "incomeRange": incomeRange, "car": car, "bike": bike, "threeWheeler": threeWheeler, "none": none,
             "loanAmount": loanAmount}
     result = await userCollection.insert_one(user)
+    # Append the new user data to the CSV file
+    new_user_data = {
+        'Age': None,  # Replace with actual age if available
+        'Monthly_Total_Income': incomeRange,
+        'Gender_Female': gender.lower() == 'female',
+        'Gender_Male': gender.lower() == 'male',
+        'Occupation_Employee': False,  # Replace with actual occupation if available
+        'Occupation_Part_timer': False,  # Replace with actual occupation if available
+        'Occupation_Student': False,  # Replace with actual occupation if available
+        'Vehicle_you_own_Bike': bike,
+        'Vehicle_you_own_Bike_Car': car and bike,
+        'Vehicle_you_own_Bike_Three_wheeler': bike and threeWheeler,
+        'Vehicle_you_own_Car_Van': car
+    }
+
+    df_new_user = pd.DataFrame([new_user_data])
+    df_new_user.to_csv('data/Generated.csv', mode='a', header=False, index=False)
     return User(**user, id=str(result.inserted_id))
 
 
@@ -92,6 +110,8 @@ async def authenticate_user(email: str, password: str):
         return False
     return User(**user)
 
+async def get_user_by_id(id: str):
+    return await userCollection.find_one({"id": id})
 #Time Series Model---------------------------------------------------------------------------------
 async def create_model_info(model_info: ModelInfo):
     document = model_info.dict()

@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException
-from app.models.record import Record
+from fastapi import APIRouter, HTTPException, Depends
+from app.database.aggregations import getRecordsByUserID
+from app.pydantic_models.record import Record
 from app.database.database import (
     create_record,
     fetch_record,
-    fetch_all_records
+    run_aggregation
 )
+from app.routers.userAuthentication.security import get_current_userID
 
 router = APIRouter()
 
@@ -25,7 +27,15 @@ async def get_record_id(id: str):
     raise HTTPException(404, "There is no record as this id")
 
 
+# @router.get("/records")
+# async def get_records():
+#     response = await fetch_all_records()
+#     return response
+
 @router.get("")
-async def get_records():
-    response = await fetch_all_records()
-    return response
+async def get_records(userID: str=Depends(get_current_userID)):
+    pipeline = getRecordsByUserID(userID)
+    response = await run_aggregation(pipeline)
+    if response:
+        return response
+    raise HTTPException(404, "No records found for the user")
