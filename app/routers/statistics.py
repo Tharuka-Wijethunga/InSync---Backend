@@ -39,7 +39,7 @@ async def getThisMonthStat(userID: str=Depends(get_current_userID)):
 
     if response:
         return response
-    raise HTTPException(404, "this month expense does not exist")
+    raise HTTPException(404, "Wallet's quiet this month. Let's fill it up!")
 
 @router.get("/previousMonthTotal")
 async def getPreviousMonthTotal(userID: str=Depends(get_current_userID)):
@@ -73,7 +73,7 @@ async def getPreviousMonthStat(userID: str=Depends(get_current_userID)):
 
     if response:
         return response
-    raise HTTPException(404, "this month expense does not exist")
+    raise HTTPException(404, "Looks like your wallet was quiet last month!")
 
 async def trainModel(userID: str) -> Prophet:
     pipeline = DailyRecordsGroupByCategory(userID)
