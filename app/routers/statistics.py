@@ -30,6 +30,7 @@ async def getThisMonthStat(userID: str=Depends(get_current_userID)):
     if response:
         totalAmount = response[0]['totalAmount']
 
+
 #rearange each category as this format {'value': 19.15, 'category': 'Rent', 'sum': 5000.0}
     pipeline = getGroupCategorySum(userID,currentMonth)
     response = await run_aggregation(pipeline)

@@ -1,7 +1,6 @@
 import motor.motor_asyncio
 import pandas as pd
-
-from ..pydantic_models.record import Record, ObjectId
+from ..pydantic_models.record import ObjectId
 from passlib.context import CryptContext
 from app.pydantic_models.userModel import User
 from app.pydantic_models.ModelInfo import ModelInfo
@@ -77,11 +76,11 @@ async def get_user(email: str):
 
 
 async def create_user(fullname: str, email: str, gender: str, password: str, incomeRange: float, car: bool, bike: bool,
-                      threeWheeler: bool, none: bool, loanAmount: float):
+                      threeWheeler: bool, none: bool, occupation: str):
     hashed_password = pwd_context.hash(password)
     user = {"fullname": fullname, "email": email, "gender": gender, "hashed_password": hashed_password,
             "incomeRange": incomeRange, "car": car, "bike": bike, "threeWheeler": threeWheeler, "none": none,
-            "loanAmount": loanAmount}
+            "occupation": occupation}
     result = await userCollection.insert_one(user)
     # Append the new user data to the CSV file
     new_user_data = {
@@ -111,9 +110,60 @@ async def authenticate_user(email: str, password: str):
         return False
     return User(**user)
 
+
 async def get_user_by_id(id: str):
     return await userCollection.find_one({"id": id})
+
+
+async def update_user_details(email: str, fullname: str):
+    result = await userCollection.update_one(
+        {'email': email},
+        {'$set': {'fullname': fullname}}
+    )
+    if result.matched_count == 0:
+        return None
+    return await get_user(email)
+
+
+async def update_user_email(email: str, new_email: str):
+    result = await userCollection.update_one(
+        {'email': email},
+        {'$set': {'email': new_email}}
+    )
+    if result.matched_count == 0:
+        return None
+    return await get_user(new_email)
+
+
+async def update_user_password(email: str, new_password: str):
+    hashed_password = pwd_context.hash(new_password)
+    result = await userCollection.update_one(
+        {'email': email},
+        {'$set': {'hashed_password': hashed_password}}
+    )
+    if result.matched_count == 0:
+        return None
+    return await get_user(email)
+
+
+async def delete_user_account(email: str):
+    user = await get_user(email)
+    if not user:
+        return False
+
+    await userCollection.delete_one({"email": email})
+    await accountCollection.delete_many({"email": email})
+    await recordsCollection.delete_many({"email": email})
+    await saveFilesCollection.delete_many({"userID": str(user["_id"])})
+
+    return True
+
+
+
 #Time Series Model---------------------------------------------------------------------------------
+
+
+
 async def create_model_info(model_info: ModelInfo):
     document = model_info.dict()
     result = await saveFilesCollection.insert_one(document)
@@ -127,3 +177,5 @@ async def update_model_info(userID: str, model_info: ModelInfo):
         {'userID': userID},
         {'$set': model_info.dict()}
     )
+
+
