@@ -47,7 +47,7 @@ async def signup(signup_request: SignupRequest):
         signup_request.bike,
         signup_request.threeWheeler,
         signup_request.none,
-        signup_request.loanAmount
+        signup_request.occupation
     )
 @authRouter.post("/checkMail")
 async def checkMail(email: str):
@@ -60,3 +60,6 @@ async def checkMail(email: str):
 @authRouter.get("/me")
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+

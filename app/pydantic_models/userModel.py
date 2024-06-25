@@ -1,5 +1,4 @@
 from typing import Optional
-
 from pydantic import BaseModel, BeforeValidator,Field
 from typing_extensions import Annotated
 
@@ -16,7 +15,7 @@ class User(BaseModel):
     bike: bool
     threeWheeler: bool
     none: bool
-    loanAmount: float
+    occupation: str
 
 class TokenRequest(BaseModel):
     email: str
@@ -32,4 +31,15 @@ class SignupRequest(BaseModel):
     bike: bool
     threeWheeler: bool
     none: bool
-    loanAmount: float
+    occupation: str
+
+
+class FullUpdateRequest(BaseModel):
+    fullname: Optional[str]
+    new_email: Optional[str]
+    new_password: Optional[str]
+    confirm_password: Optional[str]
+
+
+
+
