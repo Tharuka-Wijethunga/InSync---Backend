@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.database.database import update_user_details, update_user_email, update_user_password, delete_user_account, get_user
 from app.pydantic_models.userModel import User, FullUpdateRequest
-from app.routers.userAuthentication.security import get_current_user, create_access_token
+from app.routers.userAuthentication.security import get_current_user, create_access_token, create_refresh_token, \
+    get_current_userID
 
 user_info_router = APIRouter()
 
@@ -57,9 +58,11 @@ async def update_user_info(
 
     # Create a new access token with updated user info
     new_access_token = create_access_token({"sub": updated_user["email"]})
+    new_refresh_token = create_refresh_token({"sub": updated_user["email"]})
     return {
         "message": "User details updated successfully",
-        "new_access_token": new_access_token
+        "new_access_token": new_access_token,
+        "new_refresh_token": new_refresh_token
     }
 
 @user_info_router.delete("/delete-account")
