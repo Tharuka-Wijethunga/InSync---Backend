@@ -153,7 +153,7 @@ async def delete_user_account(email: str):
 
     await userCollection.delete_one({"email": email})
     await accountCollection.delete_many({"email": email})
-    await recordsCollection.delete_many({"email": email})
+    await recordsCollection.delete_many({"userID": str(user["_id"])})
     await saveFilesCollection.delete_many({"userID": str(user["_id"])})
 
     return True
