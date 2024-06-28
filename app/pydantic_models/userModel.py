@@ -35,7 +35,7 @@ class SignupRequest(BaseModel):
 
 class FullUpdateRequest(BaseModel):
     fullname: Optional[str]
-    new_email: Optional[str]
+    current_password: Optional[str]
     new_password: Optional[str]
     confirm_password: Optional[str]
 

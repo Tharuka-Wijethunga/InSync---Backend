@@ -828,6 +828,19 @@ Age,Monthly Total Income,Monthly Total Expense,Gender_Female,Gender_Male,Occupat
 ,0.0,False,False,False,False,False,True,True,True,True
 ,0.0,False,False,False,False,False,True,True,True,True
 ,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
+,0.0,False,False,False,False,False,True,True,True,True
 ,1300.0,False,True,False,False,False,False,False,False,True
 ,30000.0,False,True,False,False,False,False,False,False,True
 ,30000.0,False,True,False,False,False,False,False,False,False
@@ -841,3 +854,4 @@ Age,Monthly Total Income,Monthly Total Expense,Gender_Female,Gender_Male,Occupat
 ,15000.0,False,True,False,False,False,False,False,False,False
 ,10000.0,False,True,False,False,False,False,False,False,False
 ,15000.0,False,True,False,False,False,False,False,False,False
+,0.0,False,False,False,False,False,True,True,True,True

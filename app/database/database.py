@@ -169,6 +169,9 @@ async def update_user_password(email: str, new_password: str):
     return await get_user(email)
 
 
+async def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
 async def delete_user_account(email: str):
     user = await get_user(email)
     if not user:
