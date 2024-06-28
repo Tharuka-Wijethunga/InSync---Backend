@@ -1,5 +1,5 @@
 from jose import JWTError, jwt
-from fastapi import Depends, HTTPException,status
+from fastapi import Depends, HTTPException, status
 from app.database.database import get_user
 from app.pydantic_models.userModel import User
 from datetime import datetime, timedelta
@@ -71,6 +71,7 @@ async def get_current_userID(token: str = Depends(oauth2_scheme)) -> str:
     # Get the user ID
     user_id = str(user["_id"])
     return user_id
+
 
 def create_verification_token(email: str):
     token = jwt.encode({"email": email, "exp": datetime.utcnow() + timedelta(minutes=1)}, SECRET_KEY, algorithm=ALGORITHM)
