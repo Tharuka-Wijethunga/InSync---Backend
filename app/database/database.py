@@ -12,8 +12,10 @@ recordsCollection = database.Records
 accountCollection = database.Accounts
 userCollection = database.Users
 saveFilesCollection = database.SaveFiles
+emailVerificationsCollection = database.EmailVerifications
 
 
+# DashBoard & Add Records -------------------------------------------------------------------------------------<Tharuka>
 async def fetch_balance(type):
     document = await accountCollection.find_one({"type": type})
     balance = document["balance"]
@@ -64,16 +66,16 @@ async def update_balance(account_type, new_balance):
         {'$set': {'balance': new_balance}}
     )
 
+async def get_user_by_id(id: str):
+    return await userCollection.find_one({"id": id})
 
-# userDatabase(login,signup,token)----------------------------------------------------------------------------------
+# userDatabase(login,signup,token)-------------------------------------------------------------------------------<lihaj>
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
 async def get_user(email: str):
     return await userCollection.find_one({"email": email})
-
 
 async def create_user(fullname: str, email: str, gender: str, password: str, incomeRange: float, car: bool, bike: bool,
                       threeWheeler: bool, none: bool, occupation: str):
@@ -101,7 +103,6 @@ async def create_user(fullname: str, email: str, gender: str, password: str, inc
     df_new_user.to_csv('data/Generated.csv', mode='a', header=False, index=False)
     return User(**user, id=str(result.inserted_id))
 
-
 async def authenticate_user(email: str, password: str):
     user = await get_user(email)
     if not user:
@@ -111,10 +112,32 @@ async def authenticate_user(email: str, password: str):
     return User(**user)
 
 
-async def get_user_by_id(id: str):
-    return await userCollection.find_one({"id": id})
+# Email Verification --------------------------------------------------------------------------------------------<lihaj>
+async def verify_user_email(email: str):
+    await emailVerificationsCollection.insert_one({"email": email,"verified": True})
+async def get_user_verify_info(email: str):
+    return await emailVerificationsCollection.find_one({"email": email})
+async def delete_user_verify_info(email: str):
+    await emailVerificationsCollection.delete_one({"email": email})
 
 
+# Time Series Model----------------------------------------------------------------------------------------------<lihaj>
+async def create_model_info(model_info: ModelInfo):
+    document = model_info.dict()
+    result = await saveFilesCollection.insert_one(document)
+    return document
+
+async def get_model_info(userID: str):
+    return await saveFilesCollection.find_one({"userID": userID})
+
+async def update_model_info(userID: str, model_info: ModelInfo):
+    await saveFilesCollection.update_one(
+        {'userID': userID},
+        {'$set': model_info.dict()}
+    )
+
+
+# User Profile -------------------------------------------------------------------------------------------------<Panchu>
 async def update_user_details(email: str, fullname: str):
     result = await userCollection.update_one(
         {'email': email},
@@ -157,25 +180,5 @@ async def delete_user_account(email: str):
     await saveFilesCollection.delete_many({"userID": str(user["_id"])})
 
     return True
-
-
-
-#Time Series Model---------------------------------------------------------------------------------
-
-
-
-async def create_model_info(model_info: ModelInfo):
-    document = model_info.dict()
-    result = await saveFilesCollection.insert_one(document)
-    return document
-
-async def get_model_info(userID: str):
-    return await saveFilesCollection.find_one({"userID": userID})
-
-async def update_model_info(userID: str, model_info: ModelInfo):
-    await saveFilesCollection.update_one(
-        {'userID': userID},
-        {'$set': model_info.dict()}
-    )
 
 

@@ -16,7 +16,6 @@ class User(BaseModel):
     threeWheeler: bool
     none: bool
     occupation: str
-
 class TokenRequest(BaseModel):
     email: str
     password: str
