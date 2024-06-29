@@ -64,17 +64,8 @@ async def update_user_info(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No valid fields to update"
         )
-
-    # Fetch the updated user details to verify updates
-    updated_user = await get_user(current_user.email)
-
-    # Create a new access token with updated user info
-    new_access_token = create_access_token({"sub": updated_user["email"]})
-    new_refresh_token = create_refresh_token({"sub": updated_user["email"]})
     return {
         "message": "User details updated successfully",
-        "new_access_token": new_access_token,
-        "new_refresh_token": new_refresh_token
     }
 
 @user_info_router.delete("/delete-account")
