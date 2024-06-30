@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 
 class Account(BaseModel):
+    userID: str
     type: str
     balance: float
 

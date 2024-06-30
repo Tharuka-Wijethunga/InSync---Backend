@@ -22,10 +22,13 @@ async def fetch_balance(type):
     return balance
 
 
-async def create_account(account):
-    document = account
+async def create_account(user_id):
+    document = {"userID":user_id, "type":"bank", "amount": 0}
     result = await accountCollection.insert_one(document)
-    return document
+
+    document = {"userID": user_id, "type": "cash", "amount": 0}
+    result = await accountCollection.insert_one(document)
+    return {"Two Accounts are Successfully Created"}
 
 
 async def create_record(record):
@@ -101,6 +104,11 @@ async def create_user(fullname: str, email: str, gender: str, password: str, inc
 
     df_new_user = pd.DataFrame([new_user_data])
     df_new_user.to_csv('data/Generated.csv', mode='a', header=False, index=False)
+
+    #Account creation
+    user_id=str(result.inserted_id)
+    await create_account(user_id)
+
     return User(**user, id=str(result.inserted_id))
 
 async def authenticate_user(email: str, password: str):
