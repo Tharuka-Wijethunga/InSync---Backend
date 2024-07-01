@@ -5,7 +5,7 @@ from app.pydantic_models.account import Account
 from app.pydantic_models.account import UpdateBalance
 from app.pydantic_models.account import UpdateBalanceManually
 from .userAuthentication.security import get_current_userID, get_current_user
-from ..database.aggregations import today_spending
+from ..database.aggregations import today_spending, getAccountsByUserID
 from datetime import datetime, timedelta
 from ..pydantic_models.inputData import PredictionResponse, InputData
 from app.database.database import (
@@ -13,7 +13,7 @@ from app.database.database import (
     create_account,
     run_aggregation,
     update_balance,
-    get_user_by_id
+    get_user_by_id, recordsCollection
 )
 from ..pydantic_models.userModel import User
 
@@ -24,11 +24,11 @@ model = joblib.load("models/expense_forecasting_model.pkl")
 scaler = joblib.load("models/scaler.pkl")
 
 @router.get("/account", response_model=float)
-async def get_balance(type):
-    response = await fetch_balance(type)
+async def get_balance(type: str, userID: str=Depends(get_current_userID)):
+    response = await fetch_balance(type, userID)
     if response:
         return response
-    raise HTTPException(404, "There is no account type {type}")
+    raise HTTPException(404, f"There is no account type {type}")
 
 
 @router.post("/account", response_model=Account)
@@ -50,19 +50,19 @@ async def get_today_spending(userID: str=Depends(get_current_userID)):
     end = end.strftime("%Y-%m-%d")
 
     pipeline = today_spending(start, end, userID)
-    response = await run_aggregation(pipeline)
+    response = await run_aggregation(pipeline, recordsCollection)
     if response:
         return response[0]['spends'] if response else 0
     raise HTTPException(404, "No expense records found for today")
 
 
 @router.put("/account/{account}", response_model=Account)
-async def put_account(account: str, update: UpdateBalance):
+async def put_account(account: str, update: UpdateBalance, userID: str = Depends(get_current_userID)):
     # Fetch the current balance from the database
-    balance = await fetch_balance(account)
+    balance = await fetch_balance(account, userID)
 
     if balance is None:
-        raise HTTPException(404, f"There is no account type {account}")
+        raise HTTPException(404, f"There is no account type {account} for user {userID}")
 
     if update.type == 'expense':
         balance -= update.amount
@@ -70,22 +70,22 @@ async def put_account(account: str, update: UpdateBalance):
         balance += update.amount
 
     # Save the updated balance back to the database
-    await update_balance(account, balance)
+    await update_balance(account, balance, userID)
 
-    return {"type": account, "balance": balance}
+    return {"userID": userID, "type": account, "balance": balance}
 
 
-@router.put("/account/{account}/manual",response_model=Account)
-async def put_account_manual(account: str, update: UpdateBalanceManually):
-    balance = await fetch_balance(account)
+@router.put("/account/{account}/manual", response_model=Account)
+async def put_account_manual(account: str, update: UpdateBalanceManually, userID: str = Depends(get_current_userID)):
+    balance = await fetch_balance(account, userID)
 
     if balance is None:
-        raise HTTPException(404, f"There is no account type {account}")
+        raise HTTPException(404, f"There is no account type {account} for user {userID}")
 
     balance = update.balance
 
-    await update_balance(account, balance)
-    return {"type": account, "balance": balance}
+    await update_balance(account, balance, userID)
+    return {"userID": userID, "type": account, "balance": balance}
 
 
 # @router.get("/predict", response_model=PredictionResponse)

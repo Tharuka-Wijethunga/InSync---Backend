@@ -1,5 +1,7 @@
 import motor.motor_asyncio
 import pandas as pd
+
+from .aggregations import getAccountsByUserID
 from ..pydantic_models.record import ObjectId
 from passlib.context import CryptContext
 from app.pydantic_models.userModel import User
@@ -16,17 +18,19 @@ emailVerificationsCollection = database.EmailVerifications
 
 
 # DashBoard & Add Records -------------------------------------------------------------------------------------<Tharuka>
-async def fetch_balance(type):
-    document = await accountCollection.find_one({"type": type})
-    balance = document["balance"]
-    return balance
-
+async def fetch_balance(account: str, userID: str):
+    pipeline = getAccountsByUserID(userID)
+    result = await run_aggregation(pipeline, accountCollection)
+    for account_data in result:
+        if account_data['type'] == account:
+            return account_data['balance']
+    return None
 
 async def create_account(user_id):
-    document = {"userID":user_id, "type":"bank", "amount": 0}
+    document = {"userID":user_id, "type":"bank", "balance": 0}
     result = await accountCollection.insert_one(document)
 
-    document = {"userID": user_id, "type": "cash", "amount": 0}
+    document = {"userID": user_id, "type": "cash", "balance": 0}
     result = await accountCollection.insert_one(document)
     return {"Two Accounts are Successfully Created"}
 
@@ -58,14 +62,14 @@ async def fetch_record(id):
 #     return records
 
 
-async def run_aggregation(pipeline: list[dict]):
-    result = await recordsCollection.aggregate(pipeline).to_list(None)
+async def run_aggregation(pipeline: list[dict], collection):
+    result = await collection.aggregate(pipeline).to_list(None)
     return result
 
 
-async def update_balance(account_type, new_balance):
+async def update_balance(account_type, new_balance, user_id):
     await accountCollection.update_one(
-        {'type': account_type},
+        {'type': account_type, 'userID': user_id},
         {'$set': {'balance': new_balance}}
     )
 
