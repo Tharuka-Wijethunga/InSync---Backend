@@ -120,3 +120,48 @@ def DailyRecordsGroupByCategory(userID):
         }
     ]
     return pipeline
+
+def GetAllUsersInfo():
+    pipeline = [
+        {
+            '$project': {
+                '_id': 0,
+                'userID': {
+                    '$toString': '$_id'
+                },
+                'gender': '$gender',
+                'incomeRange': '$incomeRange',
+                'car': '$car',
+                'bike': '$bike',
+                'threeWheeler': '$threeWheeler',
+                'none': '$none',
+                'occupation': '$occupation'
+            }
+        }
+    ]
+    return pipeline
+
+def AllUsersDailyRecordsGroupByCategory():
+    pipeline = [
+        {
+            '$group': {
+                '_id': {
+                    'userID': '$userID',
+                    'date': '$date',
+                    'category': '$category'
+                },
+                'totalAmount': {
+                    '$sum': '$amount'
+                }
+            }
+        }, {
+            '$project': {
+                '_id': 0,
+                'userID': '$_id.userID',
+                'Date': '$_id.date',
+                'Category': '$_id.category',
+                'Amount': '$totalAmount'
+            }
+        }
+    ]
+    return pipeline

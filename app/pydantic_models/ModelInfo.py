@@ -6,3 +6,5 @@ class ModelInfo(BaseModel):
     userID: str
     model_path: str
     last_trained_day: Optional[datetime]
+
+
