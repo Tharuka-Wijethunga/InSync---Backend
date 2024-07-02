@@ -165,3 +165,13 @@ def AllUsersDailyRecordsGroupByCategory():
         }
     ]
     return pipeline
+
+def getAccountsByUserID(user_id):
+    pipeline = [
+        {
+            '$match': {
+                'userID': user_id
+            }
+        }
+    ]
+    return pipeline

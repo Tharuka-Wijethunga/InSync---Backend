@@ -4,7 +4,7 @@ from app.pydantic_models.record import Record
 from app.database.database import (
     create_record,
     fetch_record,
-    run_aggregation
+    run_aggregation, recordsCollection
 )
 from app.routers.userAuthentication.security import get_current_userID
 
@@ -38,7 +38,7 @@ async def get_record_id(id: str):
 @router.get("")
 async def get_records(userID: str=Depends(get_current_userID)):
     pipeline = getRecordsByUserID(userID)
-    response = await run_aggregation(pipeline)
+    response = await run_aggregation(pipeline, recordsCollection)
     if response:
         return response
     raise HTTPException(404, "No records found for the user")
