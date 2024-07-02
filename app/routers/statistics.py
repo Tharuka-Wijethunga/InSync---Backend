@@ -145,7 +145,7 @@ async def forecast_next_day(userID: str=Depends(get_current_userID)):
         return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(1).to_dict(orient='records')
 
 
-async def trainGeneralModel() -> Prophet:
+async def trainModelForCategory(category: str) -> Prophet:
 
     print(f"Training model at {datetime.now()}")
 
@@ -239,7 +239,7 @@ async def trainGeneralModel() -> Prophet:
         print(f"{user_id}: {encoded_value}")
 
     # Prepare DataFrame for Prophet
-    df = df[['Date', 'Foods & Drinks', 'userID', 'Male', 'Female', 'incomeRange', 'Car', 'Bike', 'ThreeWheeler', 'None',
+    df = df[['Date',category, 'userID', 'Male', 'Female', 'incomeRange', 'Car', 'Bike', 'ThreeWheeler', 'None',
              'Student', 'Employee (Full Time)', 'Employee (Part Time)']]
     df.columns = ['ds', 'y', 'userID', 'Male', 'Female', 'incomeRange', 'Car', 'Bike', 'ThreeWheeler', 'None',
                   'Student', 'Employee (Full Time)', 'Employee (Part Time)']
@@ -260,60 +260,84 @@ async def trainGeneralModel() -> Prophet:
     model.add_regressor('Employee (Part Time)')
     model.fit(df)
 
-    # Saving the model file in directory
-    model_path = f"app/generalModel/trainedModels/model.pkl"
+    # Saving the model file
+    model_path = f"app/generalModel/trainedModels/{category}.pkl"
     dump((model,label_mapping), model_path)
 
-    # Create or update the model info in the database
-    model_info = GeneralModelInfo(modelID="general_model", model_path=model_path, last_trained_day=datetime.now())
-    existing_model_info = await get_general_model_info("general_model")
+    # Save model info to MongoDB
+    model_info = GeneralModelInfo(modelID=category, model_path=model_path, last_trained_day=datetime.now())
+    existing_model_info = await get_general_model_info(category)
     if existing_model_info is None:
         await create_general_model_info(model_info)
     else:
-        await update_general_model_info("general_model", model_info)
+        await update_general_model_info(category, model_info)
 
     return model
 
 
+async def trainGeneralModel():
+    categories = ['Foods & Drinks', 'Shopping', 'Public transport', 'Vehicle', 'Health', 'Bills', 'Loans',
+                  'Rent']
+
+    for category in categories:
+        await trainModelForCategory(category)
+
 @router.on_event("startup")
 async def startup_event():
     scheduler.start()
-    scheduler.add_job(trainGeneralModel, CronTrigger(hour=15, minute=0))
+    scheduler.add_job(trainGeneralModel, CronTrigger(hour=17, minute=58))
 
 @router.get("/ForecastNextDay_GeneralModel")
 async def get_forecast_next_day(current_user: User = Depends(get_current_user)):
+    categories = ['Foods & Drinks', 'Shopping', 'Public transport', 'Vehicle', 'Health', 'Bills', 'Loans',
+                  'Rent']
+    forecasts = {}
 
-    model_info = await get_general_model_info("general_model")
+    for category in categories:
+        model_info = await get_general_model_info(category)
 
-    print("Using saved general model...")
-    model,label_mapping = load(model_info['model_path'])
+        print("Using saved general model...")
+        model,label_mapping = load(model_info['model_path'])
 
-    userID = current_user.id
+        userID = current_user.id
+        print(userID)
 
-    if userID not in label_mapping:
-        raise HTTPException(status_code=404, detail="UserID not found")
+        if userID not in label_mapping:
+            raise HTTPException(status_code=404, detail="No records found for this user")
 
-    encoded_userID = label_mapping[userID]
+        encoded_userID = label_mapping[userID]
 
-    if model:
-        # Make future dataframe
-        future = model.make_future_dataframe(periods=1)  # Predict next day
+        if model:
+            # Make future dataframe
+            future = model.make_future_dataframe(periods=1)  # Predict next day
 
-        # Fill future dataframe with current_user details
-        future['userID'] = encoded_userID
-        future['Male'] = 1 if current_user.gender == 'Male' else 0
-        future['Female'] = 1 if current_user.gender == 'Female' else 0
-        future['incomeRange'] = current_user.incomeRange
-        future['Car'] = 1 if current_user.car else 0
-        future['Bike'] = 1 if current_user.bike else 0
-        future['ThreeWheeler'] = 1 if current_user.threeWheeler else 0
-        future['None'] = 1 if current_user.none else 0
-        future['Student'] = 1 if current_user.occupation == 'Student' else 0
-        future['Employee (Full Time)'] = 1 if current_user.occupation == 'Employee (Full Time)' else 0
-        future['Employee (Part Time)'] = 1 if current_user.occupation == 'Employee (Part Time)' else 0
+            # Fill future dataframe with current_user details
+            future['userID'] = encoded_userID
+            future['Male'] = 1 if current_user.gender == 'Male' else 0
+            future['Female'] = 1 if current_user.gender == 'Female' else 0
+            future['incomeRange'] = current_user.incomeRange
+            future['Car'] = 1 if current_user.car else 0
+            future['Bike'] = 1 if current_user.bike else 0
+            future['ThreeWheeler'] = 1 if current_user.threeWheeler else 0
+            future['None'] = 1 if current_user.none else 0
+            future['Student'] = 1 if current_user.occupation == 'Student' else 0
+            future['Employee (Full Time)'] = 1 if current_user.occupation == 'Employee (Full Time)' else 0
+            future['Employee (Part Time)'] = 1 if current_user.occupation == 'Employee (Part Time)' else 0
 
-        # Forecast
-        forecast = model.predict(future)
+            # Forecast
+            forecast = model.predict(future)
 
-        # Return the forecast
-        return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(1).to_dict(orient='records')
+            # Get the forecasted value and date
+            forecast_record = forecast[['ds', 'yhat']].tail(1).to_dict(orient='records')[0]
+            forecast_record['yhat'] = max(0, forecast_record['yhat'])  # Ensure yhat is not negative
+
+            # Format the forecast record
+            formatted_forecast = {
+                "Date": forecast_record['ds'].strftime('%Y-%m-%d'),  # Format date as 'YYYY-MM-DD'
+                "Amount": forecast_record['yhat']
+            }
+
+            # Store the formatted forecast for the category
+            forecasts[category] = formatted_forecast
+
+    return forecasts
