@@ -7,15 +7,19 @@ from datetime import datetime, timedelta
 
 from app.pydantic_models.GeneralModelInfo import GeneralModelInfo
 from app.pydantic_models.ModelInfo import ModelInfo
-from app.routers.userAuthentication.security import get_current_userID
+from app.pydantic_models.userModel import User
+from app.routers.userAuthentication.security import get_current_userID, get_current_user
 
 import pandas as pd
 from prophet import Prophet
 from joblib import dump, load
 from sklearn.preprocessing import LabelEncoder
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 
 router = APIRouter()
+scheduler = AsyncIOScheduler()
 @router.get("/thisMonthTotal")
 async def getThisMonthTotal(userID: str=Depends(get_current_userID)):
     currentMonth = datetime.now().strftime("-%m-")
@@ -142,6 +146,9 @@ async def forecast_next_day(userID: str=Depends(get_current_userID)):
 
 
 async def trainGeneralModel() -> Prophet:
+
+    print(f"Training model at {datetime.now()}")
+
     recordPipeline = AllUsersDailyRecordsGroupByCategory()
     response = await run_aggregation(recordPipeline)
     if response:
@@ -255,7 +262,7 @@ async def trainGeneralModel() -> Prophet:
 
     # Saving the model file in directory
     model_path = f"app/generalModel/trainedModels/model.pkl"
-    dump((model,df['cap'].iloc[0]), model_path)
+    dump((model,label_mapping), model_path)
 
     # Create or update the model info in the database
     model_info = GeneralModelInfo(modelID="general_model", model_path=model_path, last_trained_day=datetime.now())
@@ -268,32 +275,43 @@ async def trainGeneralModel() -> Prophet:
     return model
 
 
+@router.on_event("startup")
+async def startup_event():
+    scheduler.start()
+    scheduler.add_job(trainGeneralModel, CronTrigger(hour=15, minute=0))
+
 @router.get("/ForecastNextDay_GeneralModel")
-async def get_forecast_next_day():
-    current_date = datetime.now()
+async def get_forecast_next_day(current_user: User = Depends(get_current_user)):
+
     model_info = await get_general_model_info("general_model")
-    if model_info is None or model_info['last_trained_day'].month != current_date.month:
-        print("Retraining model...")
-        model = await trainGeneralModel()
-    else:
-        print("Using saved model...")
-        model = load(model_info['model_path'])
+
+    print("Using saved general model...")
+    model,label_mapping = load(model_info['model_path'])
+
+    userID = current_user.id
+
+    if userID not in label_mapping:
+        raise HTTPException(status_code=404, detail="UserID not found")
+
+    encoded_userID = label_mapping[userID]
 
     if model:
         # Make future dataframe
         future = model.make_future_dataframe(periods=1)  # Predict next day
 
-        future['userID'] = 2
-        future['Male'] = 1
-        future['Female'] = 0
-        future['incomeRange'] = 25000
-        future['Car'] = 1
-        future['Bike'] = 0
-        future['ThreeWheeler'] = 0
-        future['None'] = 0
-        future['Student'] = 1
-        future['Employee (Full Time)'] = 0
-        future['Employee (Part Time)'] = 0
+        # Fill future dataframe with current_user details
+        future['userID'] = encoded_userID
+        future['Male'] = 1 if current_user.gender == 'Male' else 0
+        future['Female'] = 1 if current_user.gender == 'Female' else 0
+        future['incomeRange'] = current_user.incomeRange
+        future['Car'] = 1 if current_user.car else 0
+        future['Bike'] = 1 if current_user.bike else 0
+        future['ThreeWheeler'] = 1 if current_user.threeWheeler else 0
+        future['None'] = 1 if current_user.none else 0
+        future['Student'] = 1 if current_user.occupation == 'Student' else 0
+        future['Employee (Full Time)'] = 1 if current_user.occupation == 'Employee (Full Time)' else 0
+        future['Employee (Part Time)'] = 1 if current_user.occupation == 'Employee (Part Time)' else 0
+
         # Forecast
         forecast = model.predict(future)
 
