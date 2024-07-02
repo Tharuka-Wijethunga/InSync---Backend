@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.database.aggregations import sumOfAllExpenses, getGroupCategorySum, DailyRecordsGroupByCategory, \
     GetAllUsersInfo, AllUsersDailyRecordsGroupByCategory
 from app.database.database import run_aggregation, get_model_info, create_model_info, update_model_info, \
-    run_aggregation_for_users, get_general_model_info, create_general_model_info, update_general_model_info
+    run_aggregation_for_users, get_general_model_info, create_general_model_info, update_general_model_info, \
+    userCollection, recordsCollection
 from datetime import datetime, timedelta
 
 from app.pydantic_models.GeneralModelInfo import GeneralModelInfo
@@ -24,7 +25,7 @@ scheduler = AsyncIOScheduler()
 async def getThisMonthTotal(userID: str=Depends(get_current_userID)):
     currentMonth = datetime.now().strftime("-%m-")
     pipeline = sumOfAllExpenses(userID,currentMonth)
-    response = await run_aggregation(pipeline)
+    response = await run_aggregation(pipeline,recordsCollection)
     if response:
         return response[0]['totalAmount']
     raise HTTPException(404, "this month total does not exist")
@@ -35,14 +36,14 @@ async def getThisMonthStat(userID: str=Depends(get_current_userID)):
 
 #get the totalAmount
     pipeline = sumOfAllExpenses(userID,currentMonth)
-    response = await run_aggregation(pipeline)
+    response = await run_aggregation(pipeline,recordsCollection)
     if response:
         totalAmount = response[0]['totalAmount']
 
 
 #rearange each category as this format {'value': 19.15, 'category': 'Rent', 'sum': 5000.0}
     pipeline = getGroupCategorySum(userID,currentMonth)
-    response = await run_aggregation(pipeline)
+    response = await run_aggregation(pipeline,recordsCollection)
     if response:
         for item in response:
             item['value'] = round((item['sum'] / totalAmount) * 100, 2)
@@ -57,7 +58,7 @@ async def getPreviousMonthTotal(userID: str=Depends(get_current_userID)):
     previousMonth = datetime.now().replace(day=1) - timedelta(days=1)
     previousMonth = previousMonth.strftime("-%m-")
     pipeline = sumOfAllExpenses(userID,previousMonth)
-    response = await run_aggregation(pipeline)
+    response = await run_aggregation(pipeline,recordsCollection)
     if response:
         return response[0]['totalAmount']
     raise HTTPException(404, "this month total does not exist")
@@ -70,13 +71,13 @@ async def getPreviousMonthStat(userID: str=Depends(get_current_userID)):
 
 #get the totalAmount
     pipeline = sumOfAllExpenses(userID,previousMonth)
-    response = await run_aggregation(pipeline)
+    response = await run_aggregation(pipeline,recordsCollection)
     if response:
         totalAmount = response[0]['totalAmount']
 
 #rearange each category as this format {'value': 19.15, 'category': 'Rent', 'sum': 5000.0}
     pipeline = getGroupCategorySum(userID,previousMonth)
-    response = await run_aggregation(pipeline)
+    response = await run_aggregation(pipeline,recordsCollection)
     if response:
         for item in response:
             item['value'] = round((item['sum'] / totalAmount) * 100, 2)
@@ -87,7 +88,7 @@ async def getPreviousMonthStat(userID: str=Depends(get_current_userID)):
 
 async def trainModel(userID: str) -> Prophet:
     pipeline = DailyRecordsGroupByCategory(userID)
-    response = await run_aggregation(pipeline)
+    response = await run_aggregation(pipeline,recordsCollection)
     if response:
         df = pd.DataFrame(response)
         df = df.pivot(index='Date', columns='Category', values='Amount').reset_index().fillna(0)
@@ -145,12 +146,14 @@ async def forecast_next_day(userID: str=Depends(get_current_userID)):
         return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(1).to_dict(orient='records')
 
 
+#General Model------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 async def trainModelForCategory(category: str) -> Prophet:
 
     print(f"Training model at {datetime.now()}")
 
     recordPipeline = AllUsersDailyRecordsGroupByCategory()
-    response = await run_aggregation(recordPipeline)
+    response = await run_aggregation(recordPipeline,recordsCollection)
     if response:
         # Convert the response to a DataFrame
         record_df = pd.DataFrame(response)
@@ -173,7 +176,7 @@ async def trainModelForCategory(category: str) -> Prophet:
         record_df['Date'] = pd.to_datetime(record_df['Date'])
 
     userPipeline = GetAllUsersInfo()
-    response = await run_aggregation_for_users(userPipeline)
+    response = await run_aggregation(userPipeline,userCollection)
     if response:
         user_df = pd.DataFrame(response)
 
@@ -285,13 +288,14 @@ async def trainGeneralModel():
 @router.on_event("startup")
 async def startup_event():
     scheduler.start()
-    scheduler.add_job(trainGeneralModel, CronTrigger(hour=17, minute=58))
+    scheduler.add_job(trainGeneralModel, CronTrigger(hour=1, minute=8))
 
 @router.get("/ForecastNextDay_GeneralModel")
 async def get_forecast_next_day(current_user: User = Depends(get_current_user)):
     categories = ['Foods & Drinks', 'Shopping', 'Public transport', 'Vehicle', 'Health', 'Bills', 'Loans',
                   'Rent']
     forecasts = {}
+    total_amount = 0
 
     for category in categories:
         model_info = await get_general_model_info(category)
@@ -334,10 +338,21 @@ async def get_forecast_next_day(current_user: User = Depends(get_current_user)):
             # Format the forecast record
             formatted_forecast = {
                 "Date": forecast_record['ds'].strftime('%Y-%m-%d'),  # Format date as 'YYYY-MM-DD'
-                "Amount": forecast_record['yhat']
+                "Amount":  int(forecast_record['yhat'])
             }
 
             # Store the formatted forecast for the category
             forecasts[category] = formatted_forecast
 
-    return forecasts
+            # Add to total amount
+            total_amount += formatted_forecast['Amount']
+
+    # Calculate 'Value' for each category
+    for category in forecasts:
+        forecasts[category]['Value'] = round((forecasts[category]['Amount'] / total_amount) * 100, 2)
+
+    # Add total amount to the response
+    response = {"Total": total_amount}
+    response.update(forecasts)
+
+    return response
