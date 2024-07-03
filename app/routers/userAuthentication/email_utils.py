@@ -13,7 +13,7 @@ conf = ConnectionConfig(
 )
 
 async def send_verification_email(email: EmailStr, token: str):
-    verification_link = f"https://4c0c-104-28-242-102.ngrok-free.app/verify-email?token={token}"
+    verification_link = f"http://192.168.248.230:8005/verify-email?token={token}"
     message = MessageSchema(
         subject="Verify your email",
         recipients=[email],

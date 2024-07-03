@@ -69,11 +69,6 @@ async def run_aggregation(pipeline: list[dict], collection):
     result = await collection.aggregate(pipeline).to_list(None)
     return result
 
-async def run_aggregation_for_users(pipeline: list[dict]):
-    result = await userCollection.aggregate(pipeline).to_list(None)
-    return result
-
-
 async def update_balance(account_type, new_balance, user_id):
     await accountCollection.update_one(
         {'type': account_type, 'userID': user_id},
