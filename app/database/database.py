@@ -1,6 +1,8 @@
 import motor.motor_asyncio
 import pandas as pd
 
+from ..pydantic_models.GeneralModelInfo import GeneralModelInfo
+
 from .aggregations import getAccountsByUserID
 from ..pydantic_models.record import ObjectId
 from passlib.context import CryptContext
@@ -15,6 +17,7 @@ accountCollection = database.Accounts
 userCollection = database.Users
 saveFilesCollection = database.SaveFiles
 emailVerificationsCollection = database.EmailVerifications
+generalModelCollection= database.GeneralModel
 
 
 # DashBoard & Add Records -------------------------------------------------------------------------------------<Tharuka>
@@ -65,7 +68,6 @@ async def fetch_record(id):
 async def run_aggregation(pipeline: list[dict], collection):
     result = await collection.aggregate(pipeline).to_list(None)
     return result
-
 
 async def update_balance(account_type, new_balance, user_id):
     await accountCollection.update_one(
@@ -148,6 +150,21 @@ async def update_model_info(userID: str, model_info: ModelInfo):
         {'$set': model_info.dict()}
     )
 
+
+# General Time Series Mode---------------------------------------------------------------------------------------<Lihaj>
+async def create_general_model_info(model_info: GeneralModelInfo):
+    document = model_info.dict()
+    result = await generalModelCollection.insert_one(document)
+    return document
+
+async def get_general_model_info(modelID: str):
+    return await generalModelCollection.find_one({"modelID": modelID})
+
+async def update_general_model_info(modelID: str, model_info: GeneralModelInfo):
+    await generalModelCollection.update_one(
+        {'modelID': modelID},
+        {'$set': model_info.dict()}
+    )
 
 # User Profile -------------------------------------------------------------------------------------------------<Panchu>
 async def update_user_details(email: str, fullname: str):
