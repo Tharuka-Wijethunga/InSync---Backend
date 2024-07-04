@@ -175,3 +175,27 @@ def getAccountsByUserID(user_id):
         }
     ]
     return pipeline
+
+def AllUsersID():
+    pipeline = [
+        {
+            '$group': {
+                '_id': '$userID',
+                'count': {
+                    '$sum': 1
+                }
+            }
+        }, {
+            '$match': {
+                'count': {
+                    '$gt': 3
+                }
+            }
+        }, {
+            '$project': {
+                '_id': 0,
+                'userID': '$_id'
+            }
+        }
+    ]
+    return pipeline

@@ -1,5 +1,6 @@
 import motor.motor_asyncio
 import pandas as pd
+from typing import Optional
 
 from ..pydantic_models.GeneralModelInfo import GeneralModelInfo
 
@@ -15,9 +16,9 @@ database = client.InSync
 recordsCollection = database.Records
 accountCollection = database.Accounts
 userCollection = database.Users
-saveFilesCollection = database.SaveFiles
 emailVerificationsCollection = database.EmailVerifications
 generalModelCollection= database.GeneralModel
+timeSeriesModelCollection= database.TimeSeriesModel
 
 
 # DashBoard & Add Records -------------------------------------------------------------------------------------<Tharuka>
@@ -135,23 +136,25 @@ async def delete_user_verify_info(email: str):
     await emailVerificationsCollection.delete_one({"email": email})
 
 
-# Time Series Model----------------------------------------------------------------------------------------------<lihaj>
-async def create_model_info(model_info: ModelInfo):
-    document = model_info.dict()
-    result = await saveFilesCollection.insert_one(document)
-    return document
 
-async def get_model_info(userID: str):
-    return await saveFilesCollection.find_one({"userID": userID})
+#Time Series Model---------------------------------------------------------------------------------------------<Lihaj>
 
-async def update_model_info(userID: str, model_info: ModelInfo):
-    await saveFilesCollection.update_one(
-        {'userID': userID},
-        {'$set': model_info.dict()}
+async def get_model_info(userID: str, category: str) -> Optional[ModelInfo]:
+    result = await timeSeriesModelCollection.find_one({"userID": userID, "category": category})
+    if result:
+        return ModelInfo(**result)
+    return None
+
+async def create_model_info(model_info: ModelInfo) -> None:
+    await timeSeriesModelCollection.insert_one(model_info.dict())
+
+async def update_model_info(userID: str, category: str, model_info: ModelInfo) -> None:
+    await timeSeriesModelCollection.update_one(
+        {"userID": userID, "category": category},
+        {"$set": model_info.dict()}
     )
 
-
-# General Time Series Mode---------------------------------------------------------------------------------------<Lihaj>
+# General Time Series Model---------------------------------------------------------------------------------------<Lihaj>
 async def create_general_model_info(model_info: GeneralModelInfo):
     document = model_info.dict()
     result = await generalModelCollection.insert_one(document)
