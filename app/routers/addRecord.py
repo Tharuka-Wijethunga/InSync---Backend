@@ -30,11 +30,6 @@ async def get_record_id(id: str):
     raise HTTPException(404, "There is no record as this id")
 
 
-# @router.get("/records")
-# async def get_records():
-#     response = await fetch_all_records()
-#     return response
-
 @router.get("")
 async def get_records(userID: str=Depends(get_current_userID)):
     pipeline = getRecordsByUserID(userID)

@@ -53,19 +53,6 @@ async def fetch_record(id):
 
     return document
 
-
-# async def fetch_all_records():
-#     records = []
-#     cursor = recordsCollection.find({})
-#     async for document in cursor:
-#         # Handle missing 'date' and 'time' fields
-#         document.setdefault('date', None)
-#         document.setdefault('time', None)
-#
-#         records.append((Record(**document)))
-#     return records
-
-
 async def run_aggregation(pipeline: list[dict], collection):
     result = await collection.aggregate(pipeline).to_list(None)
     return result
@@ -212,7 +199,7 @@ async def delete_user_account(email: str):
     await userCollection.delete_one({"email": email})
     await accountCollection.delete_many({"email": email})
     await recordsCollection.delete_many({"userID": str(user["_id"])})
-    await saveFilesCollection.delete_many({"userID": str(user["_id"])})
+
 
     return True
 
