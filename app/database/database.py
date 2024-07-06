@@ -94,23 +94,6 @@ async def create_user(fullname: str, email: str, gender: str, password: str, inc
             "incomeRange": incomeRange, "car": car, "bike": bike, "threeWheeler": threeWheeler, "none": none,
             "occupation": occupation}
     result = await userCollection.insert_one(user)
-    # Append the new user data to the CSV file
-    new_user_data = {
-        'Age': None,  # Replace with actual age if available
-        'Monthly_Total_Income': incomeRange,
-        'Gender_Female': gender.lower() == 'female',
-        'Gender_Male': gender.lower() == 'male',
-        'Occupation_Employee': False,  # Replace with actual occupation if available
-        'Occupation_Part_timer': False,  # Replace with actual occupation if available
-        'Occupation_Student': False,  # Replace with actual occupation if available
-        'Vehicle_you_own_Bike': bike,
-        'Vehicle_you_own_Bike_Car': car and bike,
-        'Vehicle_you_own_Bike_Three_wheeler': bike and threeWheeler,
-        'Vehicle_you_own_Car_Van': car
-    }
-
-    df_new_user = pd.DataFrame([new_user_data])
-    df_new_user.to_csv('data/Generated.csv', mode='a', header=False, index=False)
 
     #Account creation
     user_id=str(result.inserted_id)
@@ -210,9 +193,8 @@ async def delete_user_account(email: str):
         return False
 
     await userCollection.delete_one({"email": email})
-    await accountCollection.delete_many({"email": email})
+    await accountCollection.delete_many({"userID": str(user["_id"])})
     await recordsCollection.delete_many({"userID": str(user["_id"])})
-    await saveFilesCollection.delete_many({"userID": str(user["_id"])})
 
     return True
 
