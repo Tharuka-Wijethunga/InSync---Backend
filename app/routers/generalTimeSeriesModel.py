@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.database.aggregations import  GetAllUsersInfo, AllUsersDailyRecordsGroupByCategory
 from app.database.database import run_aggregation,get_general_model_info, create_general_model_info, update_general_model_info,userCollection, recordsCollection
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.pydantic_models.GeneralModelInfo import GeneralModelInfo
 from app.pydantic_models.userModel import User
@@ -18,7 +18,7 @@ router = APIRouter()
 scheduler = AsyncIOScheduler()
 
 @router.get("/ForecastNextDay")
-async def get_forecast_next_day(current_user: User = Depends(get_current_user)):
+async def forecast_next_day(current_user: User = Depends(get_current_user)):
     categories = ['Foods & Drinks', 'Shopping', 'Public transport', 'Vehicle', 'Health', 'Bills', 'Loans',
                   'Rent']
     forecasts = {}
@@ -40,7 +40,12 @@ async def get_forecast_next_day(current_user: User = Depends(get_current_user)):
 
         if model:
             # Make future dataframe
-            future = model.make_future_dataframe(periods=1)  # Predict next day
+            # future = model.make_future_dataframe(periods=1)  # Predict next day
+
+            # Get tomorrow's date
+            tomorrow = datetime.now().date() + timedelta(days=1)
+            # Create future dataframe with only tomorrow's date
+            future = pd.DataFrame({'ds': [tomorrow]})
 
             # Fill future dataframe with current_user details
             future['userID'] = encoded_userID
@@ -232,5 +237,5 @@ async def trainGeneralModel():
 @router.on_event("startup")
 async def startup_event():
     scheduler.start()
-    scheduler.add_job(trainGeneralModel, CronTrigger(hour=16, minute=28))
+    scheduler.add_job(trainGeneralModel, CronTrigger(hour=20, minute=16))
 

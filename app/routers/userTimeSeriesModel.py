@@ -2,7 +2,7 @@ import os
 from fastapi import APIRouter, HTTPException, Depends
 from app.database.aggregations import DailyRecordsGroupByCategory, AllUsersID
 from app.database.database import run_aggregation, get_model_info, create_model_info, update_model_info, recordsCollection
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.pydantic_models.ModelInfo import ModelInfo
 from app.routers.userAuthentication.security import get_current_userID
@@ -37,7 +37,12 @@ async def forecast_next_day(userID: str = Depends(get_current_userID)):
         model = load(model_path)
 
         # Make future dataframe
-        future = model.make_future_dataframe(periods=1)  # Predict next day
+        # future = model.make_future_dataframe(periods=1)  # Predict next day
+
+        # Get tomorrow's date
+        tomorrow = datetime.now().date() + timedelta(days=1)
+        # Create future dataframe with only tomorrow's date
+        future = pd.DataFrame({'ds': [tomorrow]})
 
         # Forecast
         forecast = model.predict(future)
@@ -129,6 +134,6 @@ async def trainModelsForAllUsers():
 @router.on_event("startup")
 async def startup_event():
     scheduler.start()
-    scheduler.add_job(trainModelsForAllUsers, CronTrigger(hour=14, minute=41))
+    scheduler.add_job(trainModelsForAllUsers, CronTrigger(hour=20, minute=7))
 
 
