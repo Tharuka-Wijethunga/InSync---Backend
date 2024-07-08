@@ -18,7 +18,7 @@ router = APIRouter()
 scheduler = AsyncIOScheduler()
 
 @router.get("/ForecastNextDay")
-async def get_forecast_next_day(current_user: User = Depends(get_current_user)):
+async def forecast_next_day(current_user: User = Depends(get_current_user)):
     categories = ['Foods & Drinks', 'Shopping', 'Public transport', 'Vehicle', 'Health', 'Bills', 'Loans',
                   'Rent']
     forecasts = {}
