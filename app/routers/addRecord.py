@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import APIRouter, HTTPException, Depends
@@ -6,7 +8,7 @@ from app.pydantic_models.record import Record
 from app.database.database import (
     create_record,
     fetch_record,
-    run_aggregation, recordsCollection
+    run_aggregation, recordsCollection, fetch_balance, update_balance
 )
 from app.routers.userAuthentication.security import get_current_userID
 
@@ -52,21 +54,44 @@ async def get_records(userID: str = Depends(get_current_userID)):
 @router.delete("/{record_id}")
 async def delete_record_endpoint(record_id: str, userID: str = Depends(get_current_userID)):
     try:
-        # Try to delete using the string ID first
-        result = await recordsCollection.delete_one({"id": record_id, "userID": userID})
+        # Fetch the record before deleting it
+        record = await recordsCollection.find_one({"id": record_id, "userID": userID})
 
-        # If no document was deleted, try with ObjectId
-        if result.deleted_count == 0:
+        if not record:
+            # If not found by string id, try with ObjectId
             try:
                 object_id = ObjectId(record_id)
-                result = await recordsCollection.delete_one({"_id": object_id, "userID": userID})
+                record = await recordsCollection.find_one({"_id": object_id, "userID": userID})
             except:
-                # If conversion to ObjectId fails, it's definitely not found
                 raise HTTPException(status_code=404,
                                     detail="Record not found or you don't have permission to delete it")
 
+        if not record:
+            raise HTTPException(status_code=404, detail="Record not found or you don't have permission to delete it")
+
+        # Delete the record
+        result = await recordsCollection.delete_one({"id": record_id, "userID": userID})
+
         if result.deleted_count == 1:
-            return {"success": True, "message": "Record deleted successfully"}
+            # Update account balance
+            account_type = record['account']
+            amount = record['amount']
+            record_type = record['type']
+
+            current_balance = await fetch_balance(account_type, userID)
+            if current_balance is None:
+                raise HTTPException(status_code=404, detail=f"Account {account_type} not found for user {userID}")
+
+            if record_type == 'expense':
+                new_balance = current_balance + amount
+            else:  # income
+                new_balance = current_balance - amount
+
+            await update_balance(account_type, new_balance, userID)
+
+            # No need to update today's spending separately as it's calculated on-the-fly
+
+            return {"success": True, "message": "Record deleted successfully and account balance updated"}
         else:
             raise HTTPException(status_code=404, detail="Record not found or you don't have permission to delete it")
     except Exception as e:
