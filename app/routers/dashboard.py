@@ -1,5 +1,3 @@
-import joblib
-import pandas as pd
 from fastapi import APIRouter, HTTPException, Depends
 from app.pydantic_models.account import Account
 from app.pydantic_models.account import UpdateBalance
@@ -7,18 +5,15 @@ from app.pydantic_models.account import UpdateBalanceManually
 from .userAuthentication.security import get_current_userID
 from ..database.aggregations import today_spending
 from datetime import datetime, timedelta
-
 from app.database.database import (
     fetch_balance,
     create_account,
     run_aggregation,
     update_balance,
-    get_user_by_id, recordsCollection
+    recordsCollection
 )
 
-
 router = APIRouter()
-
 
 @router.get("/account", response_model=float)
 async def get_balance(type: str, userID: str=Depends(get_current_userID)):

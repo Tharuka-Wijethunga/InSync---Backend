@@ -78,7 +78,7 @@ def getGroupCategorySum(userID,currentMonth):
     return pipeline
 
 
-def getRecordsByUserID(userID):
+def getRecordsByUserID(userID: str):
     pipeline =[
         {
             '$match': {
@@ -87,7 +87,17 @@ def getRecordsByUserID(userID):
         },
         {
             '$project': {
-                '_id': {"$toString": "$_id"}
+                "id": "$id",  # Include the string ID
+                "_id": {"$toString": "$_id"},  # Include the ObjectId as a string
+                "userID": 1,
+                "type": 1,
+                "amount": 1,
+                "account": 1,
+                "category": 1,
+                "icon_name": 1,
+                "icon_color": 1,
+                "date": 1,
+                "time": 1
             }
         }
     ]
