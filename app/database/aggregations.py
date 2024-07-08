@@ -87,7 +87,7 @@ def getRecordsByUserID(userID):
         },
         {
             '$project': {
-                '_id': 0
+                '_id': {"$toString": "$_id"}
             }
         }
     ]

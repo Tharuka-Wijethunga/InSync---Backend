@@ -16,6 +16,7 @@ class RecordId(ObjectId):
             raise ValueError('Invalid ObjectId')
         return ObjectId(v)
 
+
     @classmethod
     def __get_pydantic_core_schema__(cls, _source_type: Any, _handler: Any) -> core_schema.CoreSchema:
         return core_schema.json_or_python_schema(

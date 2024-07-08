@@ -2,10 +2,12 @@ import motor.motor_asyncio
 import pandas as pd
 from typing import Optional
 
+from bson.errors import InvalidId
+
 from ..pydantic_models.GeneralModelInfo import GeneralModelInfo
 
 from .aggregations import getAccountsByUserID
-from ..pydantic_models.record import ObjectId
+from ..pydantic_models.record import ObjectId, RecordId
 from passlib.context import CryptContext
 from app.pydantic_models.userModel import User
 from app.pydantic_models.ModelInfo import ModelInfo
@@ -52,6 +54,14 @@ async def fetch_record(id):
     document.setdefault('time', None)
 
     return document
+
+async def delete_record(collection, record_id: str, user_id: str):
+    try:
+        object_id = ObjectId(record_id)
+        result = await collection.delete_one({"_id": object_id, "userID": user_id})
+        return result.deleted_count == 1
+    except InvalidId:
+        return False
 
 async def run_aggregation(pipeline: list[dict], collection):
     result = await collection.aggregate(pipeline).to_list(None)
