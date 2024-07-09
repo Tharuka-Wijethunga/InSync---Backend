@@ -13,7 +13,7 @@ conf = ConnectionConfig(
 )
 
 async def send_verification_email(email: EmailStr, token: str):
-    verification_link = f"http://192.168.248.230:8006/verify-email?token={token}"
+    verification_link = f"https://insyncapi.azurewebsites.net/verify-email?token={token}"
     message = MessageSchema(
         subject="Verify your email",
         recipients=[email],
