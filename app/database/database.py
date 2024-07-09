@@ -1,11 +1,11 @@
 import motor.motor_asyncio
 import pandas as pd
-
 from .aggregations import getAccountsByUserID
 from ..pydantic_models.record import ObjectId
 from passlib.context import CryptContext
 from app.pydantic_models.userModel import User
 from app.pydantic_models.ModelInfo import ModelInfo
+from datetime import datetime, timedelta
 
 client = motor.motor_asyncio.AsyncIOMotorClient(
     'mongodb+srv://tharuka0621:kE3DcROsCHMH8cqH@insync.7taaiij.mongodb.net/')
@@ -25,6 +25,7 @@ async def fetch_balance(account: str, userID: str):
         if account_data['type'] == account:
             return account_data['balance']
     return None
+
 
 async def create_account(user_id):
     document = {"userID":user_id, "type":"bank", "balance": 0}
@@ -195,5 +196,58 @@ async def delete_user_account(email: str):
     await saveFilesCollection.delete_many({"userID": str(user["_id"])})
 
     return True
+
+
+
+# Reset password  -------------------------------------------------------------------------------------------------<Panchu>
+
+
+
+async def get_user_by_email(email: str):
+    user = await userCollection.find_one({"email": email})
+    if user:
+        user['_id'] = str(user['_id'])  # Convert ObjectId to string
+    return user
+
+
+async def save_verification_code(user_id: str, code: int):
+    expiration_time = datetime.utcnow() + timedelta(minutes=10)
+    await userCollection.update_one(
+        {'_id': ObjectId(user_id)},
+        {'$set': {'password_reset_code': code, 'password_reset_expiration': expiration_time}}
+    )
+
+async def verify_user_code(user_id: str, code: int):
+    user = await userCollection.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        return False
+    if user.get('password_reset_code') != code:
+        return False
+    if user.get('password_reset_expiration') < datetime.utcnow():
+        return False
+    return True
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
+
+async def update_user_pass(user_id: str, new_password: str):
+    try:
+        hashed_password = hash_password(new_password)
+        result = await userCollection.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$set': {'hashed_password': hashed_password}}
+        )
+        if result.modified_count == 0:
+            return None
+        return await get_user_by_id(user_id)
+    except Exception as e:
+        print(f"An error occurred during password update: {e}")
+        return None
+
+async def get_user_by_idd(user_id: str):
+    user = await userCollection.find_one({"_id": ObjectId(user_id)})
+    if user:
+        user['_id'] = str(user['_id'])
+    return user
 
 

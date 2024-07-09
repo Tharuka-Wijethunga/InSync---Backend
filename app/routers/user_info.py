@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.database.database import update_user_details, update_user_password, delete_user_account, get_user, \
+from app.database.database import update_user_details, update_user_password, delete_user_account, \
     verify_password
 from app.pydantic_models.userModel import User, FullUpdateRequest
-from app.routers.userAuthentication.security import get_current_user, create_access_token, create_refresh_token, \
-    get_current_userID
+from app.routers.userAuthentication.security import get_current_user
 
 user_info_router = APIRouter()
 

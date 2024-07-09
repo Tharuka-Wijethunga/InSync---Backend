@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, BeforeValidator,Field
+from pydantic import BaseModel, BeforeValidator, Field, EmailStr
 from typing_extensions import Annotated
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
@@ -38,6 +38,9 @@ class FullUpdateRequest(BaseModel):
     current_password: Optional[str]
     new_password: Optional[str]
     confirm_password: Optional[str]
+
+
+
 
 
 

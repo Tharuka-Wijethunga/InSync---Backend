@@ -3,10 +3,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from starlette import status
 from fastapi.responses import HTMLResponse
-
 from app.pydantic_models.userModel import SignupRequest, User
 from app.routers.userAuthentication.email_utils import send_verification_email
-from app.routers.userAuthentication.security import create_access_token, get_current_user, create_refresh_token,create_verification_token
+from app.routers.userAuthentication.security import create_access_token, get_current_user, create_refresh_token, \
+    create_verification_token
 from app.database.database import create_user, authenticate_user, get_user, verify_user_email, get_user_verify_info, \
     delete_user_verify_info
 
