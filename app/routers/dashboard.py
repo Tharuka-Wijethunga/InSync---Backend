@@ -78,3 +78,4 @@ async def put_account_manual(account: str, update: UpdateBalanceManually, userID
 
     await update_balance(account, balance, userID)
     return {"userID": userID, "type": account, "balance": balance}
+
