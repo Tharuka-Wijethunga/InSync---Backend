@@ -7,6 +7,7 @@ from app.routers.statistics import router as statistics_router
 from app.routers.user_info import user_info_router
 from app.routers.generalTimeSeriesModel import router as general_model_router
 from app.routers.userTimeSeriesModel import router as user_time_series_router
+from app.routers.userAuthentication.reset_password import reset_router
 
 
 app = FastAPI()
@@ -29,6 +30,7 @@ app.include_router(statistics_router, tags=["statistics"], prefix="/api/statisti
 app.include_router(general_model_router, tags=["Model"],prefix="/api/generalModel")
 app.include_router(user_time_series_router, tags=["Model"],prefix="/api/userModel")
 app.include_router(user_info_router, tags=["User Info"], prefix="/api/user")
+app.include_router(reset_router, tags=["reset_router"], prefix="/api/reset_password")
 
 
 

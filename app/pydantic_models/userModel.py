@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, BeforeValidator,Field
+from pydantic import BaseModel, BeforeValidator,Field,EmailStr
 from typing_extensions import Annotated
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
