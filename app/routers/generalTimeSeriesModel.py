@@ -237,5 +237,5 @@ async def trainGeneralModel():
 @router.on_event("startup")
 async def startup_event():
     scheduler.start()
-    scheduler.add_job(trainGeneralModel, CronTrigger(hour=20, minute=16))
+    scheduler.add_job(trainGeneralModel, CronTrigger(hour=0, minute=5))
 

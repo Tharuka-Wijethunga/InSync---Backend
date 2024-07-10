@@ -19,7 +19,7 @@ scheduler = AsyncIOScheduler()
 
 @router.get("/ForecastNextDay")
 async def forecast_next_day(userID: str = Depends(get_current_userID)):
-    categories = ['Income', 'Foods & Drinks', 'Shopping', 'Public transport', 'Vehicle', 'Health', 'Bills', 'Loans',
+    categories = ['Income', 'Foods & Drinks', 'shopping', 'Public transport', 'Vehicle', 'Health', 'Bills', 'Loans',
                   'Rent', 'Other']
     forecasts = {}
     total_amount = 0
@@ -84,13 +84,15 @@ async def trainModel(userID: str) -> None:
     if response:
         df = pd.DataFrame(response)
         df = df.pivot(index='Date', columns='Category', values='Amount').reset_index().fillna(0)
-        columns = ['Income', 'Foods & Drinks', 'Shopping', 'Public transport', 'Vehicle', 'Health', 'Bills', 'Loans',
+        columns = ['Income', 'Foods & Drinks', 'shopping', 'Public transport', 'Vehicle', 'Health', 'Bills', 'Loans',
                    'Rent', 'Other']
         for col in columns:
             if col not in df.columns:
                 df[col] = 0.0
         df = df[['Date'] + columns]
         df['Date'] = pd.to_datetime(df['Date'])
+
+        print(df)
 
         for category in columns:
             category_df = df[['Date', category]].copy()
@@ -134,6 +136,6 @@ async def trainModelsForAllUsers():
 @router.on_event("startup")
 async def startup_event():
     scheduler.start()
-    scheduler.add_job(trainModelsForAllUsers, CronTrigger(hour=20, minute=7))
+    scheduler.add_job(trainModelsForAllUsers, CronTrigger(hour=0, minute=10))
 
 
